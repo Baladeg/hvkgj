@@ -2,14 +2,12 @@
 #include <cstdio>
 #include <cstring>
 #include <windows.h>
-#include <conio.h>
 #include <random>
+#include <conio.h>
 #include "cube.h"
 
 namespace
 {
-    constexpr float PI = 3.1415926535f;
-
     float A = 0.0f;
     float B = 0.0f;
     float C = 0.0f;
@@ -17,36 +15,36 @@ namespace
     constexpr float cubeWidth = 44.0f;
     constexpr int width = 120;
     constexpr int height = 40;
-    constexpr int screenSize = width * height;
 
-    float zBuffer[screenSize];
-    char screenBuffer[screenSize];
-    WORD colorBuffer[screenSize];
+    float Zaxisbuffer[width * height];
+    char buffer[width * height];
+    int backgroundascoi = ' ';
+    int idx = 0;
 
-    constexpr char backgroundAscii = ' ';
-    constexpr float incrementSpeed = 1.8f;
-    constexpr int distanceFromCam = 250;
-    constexpr float K1 = 40.0f;
+    float incrementSpeed = 1.8f;
+    int distanceFromCam = 250;
 
-    std::mt19937 rng(123456u);
-    std::uniform_int_distribution<int> colorDist(1, 15);
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float K1 = 40.0f;
+    float kkk = 0.0f;
+    int xp = 0;
+    int yp = 0;
 
-    HANDLE getConsoleHandle()
-    {
-        return GetStdHandle(STD_OUTPUT_HANDLE);
-    }
+    WORD colorForChar[256]{};
 
     void moveCursorToTop()
     {
-        HANDLE hConsole = getConsoleHandle();
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         COORD coord = { 0, 0 };
         SetConsoleCursorPosition(hConsole, coord);
     }
 
     void hideCursor()
     {
-        HANDLE hConsole = getConsoleHandle();
-        CONSOLE_CURSOR_INFO cursorInfo{};
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_CURSOR_INFO cursorInfo;
         cursorInfo.dwSize = 1;
         cursorInfo.bVisible = FALSE;
         SetConsoleCursorInfo(hConsole, &cursorInfo);
@@ -54,16 +52,43 @@ namespace
 
     void showCursor()
     {
-        HANDLE hConsole = getConsoleHandle();
-        CONSOLE_CURSOR_INFO cursorInfo{};
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_CURSOR_INFO cursorInfo;
         cursorInfo.dwSize = 20;
         cursorInfo.bVisible = TRUE;
         SetConsoleCursorInfo(hConsole, &cursorInfo);
     }
 
-    void resetConsoleColor()
+    std::mt19937 gen;
+
+    void generateRandomColors()
     {
-        SetConsoleTextAttribute(getConsoleHandle(), 7);
+        std::random_device rd;
+        gen.seed(rd());  // каждый запуск новый seed
+
+        std::uniform_int_distribution<int> colorDist(1, 15);
+
+        char faceChars[] = { '.', '+', '^', '1' };
+
+        for (char ch : faceChars)
+        {
+            colorForChar[(unsigned char)ch] = colorDist(gen);
+        }
+    }
+
+    void setConsoleColor(HANDLE hConsole, char ch)
+    {
+        WORD color = colorForChar[static_cast<unsigned char>(ch)];
+        if (color == 0)
+        {
+            color = 7;
+        }
+        SetConsoleTextAttribute(hConsole, color);
+    }
+
+    void resetConsoleColor(HANDLE hConsole)
+    {
+        SetConsoleTextAttribute(hConsole, 7);
     }
 
     float calculateX(float i, float j, float k)
@@ -91,56 +116,62 @@ namespace
             + i * sinf(B);
     }
 
-    WORD randomConsoleColor()
+    void calculateSurface(float cubeX, float cubeY, float cubeZ, int ch)
     {
-        return static_cast<WORD>(colorDist(rng));
-    }
+        x = calculateX(cubeX, cubeY, cubeZ);
+        y = calculateY(cubeX, cubeY, cubeZ);
+        z = calculateZ(cubeX, cubeY, cubeZ) + distanceFromCam;
 
-    void clearBuffers()
-    {
-        memset(screenBuffer, backgroundAscii, sizeof(screenBuffer));
-        memset(zBuffer, 0, sizeof(zBuffer));
+        kkk = 1.0f / z;
 
-        for (int i = 0; i < screenSize; ++i)
+        xp = static_cast<int>(width / 2 + K1 * kkk * x * 2);
+        yp = static_cast<int>(height / 2 + K1 * kkk * y);
+
+        idx = xp + yp * width;
+
+        if (idx >= 0 && idx < width * height)
         {
-            colorBuffer[i] = 7;
+            if (kkk > Zaxisbuffer[idx])
+            {
+                Zaxisbuffer[idx] = kkk;
+                buffer[idx] = static_cast<char>(ch);
+            }
         }
     }
+}
 
-    void calculateSurface(float cubeX, float cubeY, float cubeZ, char ch)
+void runCube()
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    A = 0.0f;
+    B = 0.0f;
+    C = 0.0f;
+
+    generateRandomColors();
+
+    COORD bufferSize = { static_cast<SHORT>(width), static_cast<SHORT>(height + 1) };
+    SetConsoleScreenBufferSize(hConsole, bufferSize);
+
+    SMALL_RECT windowSize = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height) };
+    SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
+
+    hideCursor();
+    system("cls");
+
+    while (true)
     {
-        const float x = calculateX(cubeX, cubeY, cubeZ);
-        const float y = calculateY(cubeX, cubeY, cubeZ);
-        const float z = calculateZ(cubeX, cubeY, cubeZ) + distanceFromCam;
-
-        if (z <= 0.0f)
+        if (_kbhit())
         {
-            return;
+            int key = _getch();
+            if (key == 27)
+            {
+                break;
+            }
         }
 
-        const float invZ = 1.0f / z;
-
-        const int xp = static_cast<int>(width / 2 + K1 * invZ * x * 2.0f);
-        const int yp = static_cast<int>(height / 2 + K1 * invZ * y);
-
-        if (xp < 0 || xp >= width || yp < 0 || yp >= height)
-        {
-            return;
-        }
-
-        const int idx = xp + yp * width;
-
-        if (invZ > zBuffer[idx])
-        {
-            zBuffer[idx] = invZ;
-            screenBuffer[idx] = ch;
-            colorBuffer[idx] = randomConsoleColor();
-        }
-    }
-
-    void renderFrame()
-    {
-        clearBuffers();
+        memset(buffer, backgroundascoi, sizeof(buffer));
+        memset(Zaxisbuffer, 0, sizeof(Zaxisbuffer));
 
         for (float cubeX = -cubeWidth; cubeX < cubeWidth; cubeX += incrementSpeed)
         {
@@ -155,66 +186,34 @@ namespace
 
         moveCursorToTop();
 
-        HANDLE hConsole = getConsoleHandle();
-
-        for (int y = 0; y < height; ++y)
+        for (int k = 0; k < width * height; k++)
         {
-            for (int x = 0; x < width; ++x)
+            if (k % width == 0 && k != 0)
             {
-                const int idx = x + y * width;
-                SetConsoleTextAttribute(hConsole, colorBuffer[idx]);
-                putchar(screenBuffer[idx]);
+                putchar('\n');
             }
-            putchar('\n');
-        }
-
-        resetConsoleColor();
-    }
-
-    void setupConsole()
-    {
-        HANDLE hConsole = getConsoleHandle();
-
-        COORD bufferSize = { static_cast<SHORT>(width), static_cast<SHORT>(height + 1) };
-        SetConsoleScreenBufferSize(hConsole, bufferSize);
-
-        SMALL_RECT windowSize = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height) };
-        SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
-
-        hideCursor();
-        moveCursorToTop();
-    }
-}
-
-void runCube()
-{
-    A = 0.0f;
-    B = 0.0f;
-    C = 0.0f;
-
-    setupConsole();
-
-    while (true)
-    {
-        if (_kbhit())
-        {
-            const int key = _getch();
-            if (key == 27) // ESC
+            else
             {
-                break;
+                if (buffer[k] != backgroundascoi)
+                {
+                    setConsoleColor(hConsole, buffer[k]);
+                }
+                else
+                {
+                    resetConsoleColor(hConsole);
+                }
+
+                putchar(buffer[k]);
             }
         }
-
-        renderFrame();
 
         A += 0.005f;
         B += 0.005f;
-        C += 0.002f;
 
         Sleep(1);
     }
 
-    resetConsoleColor();
+    resetConsoleColor(hConsole);
     showCursor();
     system("cls");
 }
