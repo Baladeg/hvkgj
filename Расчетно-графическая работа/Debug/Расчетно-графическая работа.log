@@ -1,0 +1,10 @@
+﻿  main.cpp
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp__glutInitWindowSize@8 в функции _main.
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp__glutInitDisplayMode@4 в функции _main.
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp__glutMainLoop@0 в функции _main.
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp__glutSwapBuffers@0 в функции "void __cdecl display(void)" (?display@@YAXXZ).
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp__glutDisplayFunc@4 в функции _main.
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp____glutInitWithExit@12 в функции _glutInit_ATEXIT_HACK@8.
+main.obj : error LNK2019: ссылка на неразрешенный внешний символ __imp____glutCreateWindowWithExit@8 в функции _glutCreateWindow_ATEXIT_HACK@4.
+C:\Users\Александр\source\repos\Расчетно-графическая работа\ThirdParty\GLUT\lib\x64\freeglut.lib : warning LNK4272: тип компьютера библиотеки "x64" конфликтует с типом целевого компьютера "x86"
+C:\Users\Александр\source\repos\Расчетно-графическая работа\Debug\Расчетно-графическая работа.exe : fatal error LNK1120: неразрешенных внешних элементов: 7
