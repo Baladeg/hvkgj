@@ -24,8 +24,8 @@ float K1 = 40;
 float kkk;
 int xp, yp;
 
-// Массивы для хранения цветов граней
-WORD colorForChar[256]; // Таблица соответствия символов цветам
+
+WORD colorForChar[256]; 
 
 void moveCursorToTop()
 {
@@ -43,25 +43,25 @@ void hideCursor()
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 }
 
-// Функция для генерации случайных цветов
+
 void generateRandomColors()
 {
-    // Инициализация генератора случайных чисел
+    
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> colorDist(1, 15); // От 1 до 15 (исключаем 0 - черный)
     
-    // Массив символов, которые используются для граней
+   
     char faceChars[] = {'.', '+', '^', '1'};
     
-    // Присваиваем случайный цвет каждому символу
+   
     for (char ch : faceChars)
     {
         colorForChar[(unsigned char)ch] = colorDist(gen);
     }
 }
 
-// Функция для установки цвета консоли
+
 void setConsoleColor(HANDLE hConsole, char ch)
 {
     SetConsoleTextAttribute(hConsole, colorForChar[(unsigned char)ch]);
@@ -119,10 +119,10 @@ int main()
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    // Генерируем случайные цвета при запуске
+
     generateRandomColors();
 
-    // Размер буфера консоли
+   
     COORD bufferSize = { (SHORT)width, (SHORT)height + 1 };
     SetConsoleScreenBufferSize(hConsole, bufferSize);
 
@@ -131,7 +131,6 @@ int main()
 
     hideCursor();
     
-    // Очищаем экран перед началом анимации
     system("cls");
 
     while (true)
@@ -152,7 +151,7 @@ int main()
 
         moveCursorToTop();
 
-        // Вывод буфера с цветами
+      
         for (int k = 0; k < width * height; k++)
         {
             if (k % width == 0 && k != 0)
@@ -176,7 +175,7 @@ int main()
         A += 0.005f;
         B += 0.005f;
 
-        Sleep(1); // 1 миллисекунда
+        Sleep(1); 
     }
 
     return 0;
